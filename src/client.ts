@@ -1,4 +1,5 @@
 import { UpdateMessage } from './types/UpdateMessage';
+import './main.css';
 
 async function main() {
   const ace = window.ace;
@@ -7,7 +8,7 @@ async function main() {
   editor.setTheme('ace/theme/twilight');
   editor.setReadOnly(true);
 
-  const ws = new WebSocket('ws://localhost:1337');
+  const ws = new WebSocket('ws://localhost:1337/listen');
   ws.onmessage = function (event) {
     const message = JSON.parse(event.data) as UpdateMessage;
     const mode = modelist.getModeForPath(message.filename).mode;

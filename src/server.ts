@@ -1,3 +1,5 @@
+import express from 'express';
+import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import chokidar from 'chokidar';
 import ignore from 'ignore';
@@ -12,7 +14,17 @@ let lastUpdate: UpdateMessage;
 
 async function main(argv: string[]) {
   const watchPath = argv[2];
-  const wss = new WebSocketServer({ port: 1337 });
+  const app = express();
+  const server = http.createServer(app);
+  const wss = new WebSocketServer({ server, path: '/listen' });
+  app.use(express.static(path.join(__dirname, '../dist')));
+
+  app.get('/', (req, res) => {
+    res.type('text/html');
+    res.status(200);
+    res.sendFile(path.join(__dirname, './index.html'));
+  });
+
   const gitignore = path.join(watchPath, '.gitignore');
 
   const ig = ignore();
@@ -85,6 +97,8 @@ async function main(argv: string[]) {
       sockets.forEach((ws) => ws.send(message));
       fileCache[filename] = currentContents;
     });
+
+  server.listen(1337);
 }
 
 main(process.argv);
