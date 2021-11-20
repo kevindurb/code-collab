@@ -3,7 +3,8 @@
   "compilerOptions": {
     "target": "ESNext",
     "jsx": "react",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "outDir": "./dist"
   },
   "include": ["./src/**/*"]
 }

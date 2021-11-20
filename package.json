@@ -5,18 +5,11 @@
   "main": "index.js",
   "scripts": {
     "build:web": "esbuild ./src/client.ts --bundle --outdir='./dist'",
-    "start": "ts-node-dev --respawn ./src/app.ts",
+    "build:app": "esbuild ./src/app.ts --bundle --platform=node --outdir='./dist'",
+    "build": "rm -rf ./dist && npm run build:web && npm run build:app",
+    "start": "node ./dist/app.js",
+    "start:dev": "ts-node-dev --respawn ./src/app.ts",
     "check": "tsc --noEmit"
-  },
-  "browser": {
-    "assert": "assert-browserify",
-    "crypto": "crypto-browserify",
-    "http": "http-browserify",
-    "https": "https-browserify",
-    "tls": "tls-browserify",
-    "events": "events-browserify",
-    "net": "net-browserify",
-    "zlib": "zlib-browserify"
   },
   "repository": {
     "type": "git",
