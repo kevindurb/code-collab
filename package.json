@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build:web": "esbuild ./src/client.ts --bundle --outdir='./dist'",
-    "start:server": "ts-node-dev --respawn ./src/server.ts",
+    "start": "ts-node-dev --respawn ./src/app.ts",
     "check": "tsc --noEmit"
   },
   "browser": {
