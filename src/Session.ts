@@ -1,4 +1,4 @@
-import { WebSocket } from 'ws';
+import { WebSocket, RawData } from 'ws';
 import { EventEmitter } from 'events';
 import { WebServer } from './WebServer';
 import { Watcher } from './Watcher';
@@ -15,9 +15,21 @@ export class Session extends EventEmitter {
     this.watcher = watcher;
   }
 
+  handleClientMessage = (data: RawData) => {
+    const message = JSON.parse(data.toString()) as Message;
+    console.log(message);
+    switch (message.type) {
+      case 'CollaboratorSelection':
+        return this.webServer.broadcast(message);
+    }
+  };
+
   handleNewConnection = (webSocket: WebSocket) => {
-    if (!this.lastKeyframe) return;
-    this.webServer.send(webSocket, this.lastKeyframe);
+    webSocket.on('message', this.handleClientMessage);
+
+    if (this.lastKeyframe) {
+      this.webServer.send(webSocket, this.lastKeyframe);
+    }
   };
 
   handleWatcherMessage = (message: Message) => {
