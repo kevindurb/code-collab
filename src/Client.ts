@@ -1,9 +1,9 @@
 import faker from 'faker';
 import { Collaborator } from './types/Collaborator';
 import { Keyframe, Message, CollaboratorSelection } from './types/Messages';
+import { Ace } from './types/Ace';
 
-const ace = window.ace;
-const Range = (ace as any).Range as AceAjax.Range;
+const ace = window.ace as unknown as Ace;
 
 export class Client {
   webSocket?: WebSocket;
@@ -39,6 +39,8 @@ export class Client {
 
     const mode = this.modeList.getModeForPath(keyframe.filename).mode;
 
+    console.log(keyframe.currentRange);
+
     this.editor.setValue(keyframe.fileContents);
     this.editor.session.setMode(mode);
     this.editor.scrollToLine(
@@ -50,11 +52,25 @@ export class Client {
     this.filename = keyframe.filename;
   };
 
-  handleCollaboratorSelection = (message: CollaboratorSelection) => {
+  handleCollaboratorSelection = ({
+    collaborator,
+    range,
+  }: CollaboratorSelection) => {
     // ignore my own updates
-    if (message.collaborator.username === this.username) return;
+    if (collaborator.username === this.username) return;
 
-    const range = new Range();
+    if (!this.editor) return;
+
+    console.log(collaborator, range);
+
+    const markRange = new ace.Range(
+      range.startRow,
+      range.startColumn,
+      range.endRow,
+      range.endColumn,
+    );
+
+    this.editor.session.addMarker(markRange, 'collab-mark', 'line', true);
   };
 
   handleMessage = (event: MessageEvent) => {

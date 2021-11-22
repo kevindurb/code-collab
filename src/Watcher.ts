@@ -37,7 +37,7 @@ export class Watcher extends EventEmitter {
     this.setupIgnore();
     this.fsWatcher = chokidar.watch(this.root);
     this.fsWatcher.on('change', this.handleChange);
-    this.fsWatcher.on('new-file', this.handleNewFile);
+    this.fsWatcher.on('new-file', this.handleChange);
   }
 
   shouldIgnore(filename: string) {
@@ -46,6 +46,14 @@ export class Watcher extends EventEmitter {
 
   async getFileContents(filename: string) {
     return (await fs.readFile(path.resolve(this.root, filename))).toString();
+  }
+
+  getLastKnownFileContents(filename: string) {
+    return this.fileCache[filename];
+  }
+
+  async updateFileCache(filename: string) {
+    this.fileCache[filename] = await this.getFileContents(filename);
   }
 
   getCursorLocation(oldContents: string, newContents: string): Range {
@@ -68,10 +76,6 @@ export class Watcher extends EventEmitter {
     };
   }
 
-  getLastKnownFileContents(filename: string) {
-    return this.fileCache[filename];
-  }
-
   handleChange = async (filename: string) => {
     if (this.shouldIgnore(filename)) return;
 
@@ -87,24 +91,7 @@ export class Watcher extends EventEmitter {
       fileContents: newContents,
     };
 
-    this.emit('message', message);
-  };
-
-  handleNewFile = async (filename: string) => {
-    if (this.shouldIgnore(filename)) return;
-    console.log('new', filename);
-    const newContents = await this.getFileContents(filename);
-    const message: Keyframe = {
-      type: 'Keyframe',
-      currentRange: {
-        startRow: 0,
-        startColumn: 0,
-        endRow: 0,
-        endColumn: 0,
-      },
-      filename,
-      fileContents: newContents,
-    };
+    await this.updateFileCache(filename);
 
     this.emit('message', message);
   };
