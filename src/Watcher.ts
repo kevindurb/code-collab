@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import chokidar, { FSWatcher } from 'chokidar';
 import ignore, { Ignore } from 'ignore';
-import { UpdateMessage, CursorLocation } from './types/UpdateMessage';
+import { Keyframe, Range } from './types/Messages';
 
 export class Watcher extends EventEmitter {
   ig: Ignore;
@@ -48,19 +48,23 @@ export class Watcher extends EventEmitter {
     return (await fs.readFile(path.resolve(this.root, filename))).toString();
   }
 
-  getCursorLocation(oldContents: string, newContents: string): CursorLocation {
+  getCursorLocation(oldContents: string, newContents: string): Range {
     if (oldContents !== newContents) {
       const [firstChange] = Diff.diffChars(oldContents, newContents);
       const firstChangeLines = firstChange.value.split('\n');
 
       return {
-        line: firstChangeLines.length,
-        column: 0,
+        startRow: firstChangeLines.length,
+        startColumn: 0,
+        endRow: firstChangeLines.length,
+        endColumn: 0,
       };
     }
     return {
-      line: 0,
-      column: 0,
+      startRow: 0,
+      startColumn: 0,
+      endRow: 0,
+      endColumn: 0,
     };
   }
 
@@ -75,28 +79,33 @@ export class Watcher extends EventEmitter {
 
     const newContents = await this.getFileContents(filename);
     const oldContents = this.getLastKnownFileContents(filename) ?? newContents;
-    const cursorLocation = this.getCursorLocation(oldContents, newContents);
-    const message: UpdateMessage = {
-      type: 'UpdateMessage',
-      cursorLocation,
+    const currentRange = this.getCursorLocation(oldContents, newContents);
+    const message: Keyframe = {
+      type: 'Keyframe',
+      currentRange,
       filename,
-      fileContent: newContents,
+      fileContents: newContents,
     };
 
-    this.emit('update', message);
+    this.emit('message', message);
   };
 
   handleNewFile = async (filename: string) => {
     if (this.shouldIgnore(filename)) return;
     console.log('new', filename);
     const newContents = await this.getFileContents(filename);
-    const message: UpdateMessage = {
-      type: 'UpdateMessage',
-      cursorLocation: { line: 0, column: 0 },
+    const message: Keyframe = {
+      type: 'Keyframe',
+      currentRange: {
+        startRow: 0,
+        startColumn: 0,
+        endRow: 0,
+        endColumn: 0,
+      },
       filename,
-      fileContent: newContents,
+      fileContents: newContents,
     };
 
-    this.emit('update', message);
+    this.emit('message', message);
   };
 }

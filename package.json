@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:web": "esbuild ./src/client.ts --bundle --outdir='./dist'",
+    "build:web": "esbuild ./src/web.ts --bundle --outdir='./dist'",
     "build:app": "esbuild ./src/app.ts --bundle --platform=node --outdir='./dist'",
     "build": "rm -rf ./dist && npm run build:web && npm run build:app",
     "start": "node ./dist/app.js",

@@ -1,4 +1,4 @@
-import { UpdateMessage } from './types/UpdateMessage';
+import { Message } from './types/Messages';
 import './main.css';
 
 async function main() {
@@ -10,14 +10,15 @@ async function main() {
 
   const ws = new WebSocket('ws://localhost:1337/listen');
   ws.onmessage = function (event) {
-    const message = JSON.parse(event.data) as UpdateMessage;
+    const message = JSON.parse(event.data) as Message;
+    if (message.type !== 'Keyframe') return;
     const mode = modelist.getModeForPath(message.filename).mode;
 
-    editor.setValue(message.fileContent);
+    editor.setValue(message.fileContents);
     editor.session.setMode(mode);
     editor.gotoLine(
-      message.cursorLocation.line,
-      message.cursorLocation.column,
+      message.currentRange.startRow,
+      message.currentRange.startColumn,
       true,
     );
   };

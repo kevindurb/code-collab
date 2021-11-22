@@ -1,9 +1,8 @@
-import { UpdateMessage } from './types/UpdateMessage';
 import { WebServer } from './WebServer';
 import { Watcher } from './Watcher';
+import { Session } from './Session';
 
 const PORT = 1337;
-let lastUpdate: UpdateMessage;
 
 async function main(argv: string[]) {
   const watchPath = argv[2];
@@ -16,19 +15,11 @@ async function main(argv: string[]) {
 
   const webServer = new WebServer();
   const watcher = new Watcher(watchPath);
+  const session = new Session(webServer, watcher);
 
-  webServer.on('connection', () => {
-    if (!lastUpdate) return;
-    webServer.broadcast(lastUpdate);
-  });
-
-  watcher.on('update', (message) => {
-    webServer.broadcast(message);
-    lastUpdate = message;
-  });
-
+  await session.start();
   await watcher.watch();
-  webServer.run(PORT);
+  await webServer.listen(PORT);
   console.log(`Ready!
     http://localhost:${PORT}
 `);

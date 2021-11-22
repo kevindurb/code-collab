@@ -3,6 +3,7 @@ import http from 'http';
 import path from 'path';
 import { EventEmitter } from 'events';
 import { WebSocketServer, WebSocket } from 'ws';
+import { Message } from './types/Messages';
 
 export class WebServer extends EventEmitter {
   app: express.Express;
@@ -29,15 +30,17 @@ export class WebServer extends EventEmitter {
     this.webSocketServer.on('connection', (ws) => this.emit('connection', ws));
   }
 
-  run(port: number | string) {
+  async listen(port: number | string) {
     this.httpServer.listen(port);
   }
 
-  broadcast(message: any) {
-    this.webSocketServer.clients.forEach((ws) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify(message));
-      }
-    });
+  send = (webSocket: WebSocket, message: Message) => {
+    if (webSocket.readyState === WebSocket.OPEN) {
+      webSocket.send(JSON.stringify(message));
+    }
+  };
+
+  broadcast(message: Message) {
+    this.webSocketServer.clients.forEach((ws) => this.send(ws, message));
   }
 }
