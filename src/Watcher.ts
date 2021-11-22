@@ -18,8 +18,7 @@ export class Watcher extends EventEmitter {
     this.ig = ignore();
   }
 
-  async watch() {
-    console.log(`Watching ${this.root}`);
+  async setupIgnore() {
     this.ig.add('.git');
 
     try {
@@ -30,7 +29,12 @@ export class Watcher extends EventEmitter {
     } catch {
       console.warn('.gitignore missing');
     }
+  }
 
+  async watch() {
+    console.log(`Watching "${this.root}"`);
+
+    this.setupIgnore();
     this.fsWatcher = chokidar.watch(this.root);
     this.fsWatcher.on('change', this.handleChange);
     this.fsWatcher.on('new-file', this.handleNewFile);

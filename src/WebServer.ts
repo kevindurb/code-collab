@@ -29,8 +29,8 @@ export class WebServer extends EventEmitter {
     this.webSocketServer.on('connection', (ws) => this.emit('connection', ws));
   }
 
-  run() {
-    this.httpServer.listen(1337);
+  run(port: number | string) {
+    this.httpServer.listen(port);
   }
 
   broadcast(message: any) {
