@@ -1,3 +1,5 @@
+import { Collaborator } from './Collaborator';
+
 export interface Range {
   startRow: number;
   startColumn: number;
@@ -20,6 +22,7 @@ export interface Update {
 }
 
 export interface CollaboratorSelection {
+  collaborator: Collaborator;
   type: 'CollaboratorSelection';
   range: Range;
   filename: string;
