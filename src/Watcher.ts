@@ -58,14 +58,18 @@ export class Watcher extends EventEmitter {
 
   getCursorLocation(oldContents: string, newContents: string): Range {
     if (oldContents !== newContents) {
-      const [firstChange] = Diff.diffChars(oldContents, newContents);
-      const firstChangeLines = firstChange.value.split('\n');
+      const [beforeChange, change] = Diff.diffChars(oldContents, newContents);
+      const beforeChangeLines = beforeChange.value.split('\n');
+      const lastLineBeforeChange =
+        beforeChangeLines[beforeChangeLines.length - 1];
+      const changeLines = change.value.split('\n');
+      const lastChangeLine = changeLines[changeLines.length - 1];
 
       return {
-        startRow: firstChangeLines.length,
-        startColumn: 0,
-        endRow: firstChangeLines.length,
-        endColumn: 0,
+        startRow: beforeChangeLines.length - 1,
+        startColumn: lastLineBeforeChange.length,
+        endRow: beforeChangeLines.length + changeLines.length - 1,
+        endColumn: lastChangeLine.length,
       };
     }
     return {

@@ -1,15 +1,17 @@
 import faker from 'faker';
-import * as ace from 'ace-builds';
+import mime from 'mime-types';
+import CodeMirror from 'codemirror';
+import 'codemirror/lib/codemirror.css';
 import { Collaborator } from './types/Collaborator';
 import { Keyframe, Message, CollaboratorSelection } from './types/Messages';
 
 export class Client {
   webSocket?: WebSocket;
-  editor?: ace.Ace.Editor;
-  modeList?: any;
+  editor?: CodeMirror.Editor;
   filename = '';
   username: string;
   color: string;
+  //here
 
   constructor() {
     this.username = localStorage.getItem('username') ?? '';
@@ -32,22 +34,35 @@ export class Client {
     color: this.color,
   });
 
-  handleKeyframe = (keyframe: Keyframe) => {
+  handleKeyframe = ({ currentRange, filename, fileContents }: Keyframe) => {
     if (!this.editor) return;
 
-    const mode = this.modeList.getModeForPath(keyframe.filename).mode;
+    // const mode = this.modeList.getModeForPath(filename).mode;
 
-    console.log(keyframe.currentRange);
+    console.log(currentRange);
 
-    this.editor.setValue(keyframe.fileContents);
-    this.editor.session.setMode(mode);
-    this.editor.scrollToLine(
-      keyframe.currentRange.startRow,
-      true,
-      true,
-      () => {},
-    );
-    this.filename = keyframe.filename;
+    this.editor.setValue(fileContents);
+    const mimeType = mime.lookup(filename);
+    if (mimeType) {
+      this.editor.setOption('mode', mimeType);
+    }
+
+    const fromPos: CodeMirror.Position = {
+      line: currentRange.startRow,
+      ch: currentRange.startColumn,
+    };
+
+    const toPos: CodeMirror.Position = {
+      line: currentRange.endRow,
+      ch: currentRange.endColumn,
+    };
+
+    this.editor.markText(fromPos, toPos, { className: 'update-mark' });
+    this.editor.scrollIntoView(fromPos);
+    // this.editor.session.setMode(mode);
+    // this.editor.scrollToLine(currentRange.startRow, true, true, () => {});
+
+    this.filename = filename;
   };
 
   handleCollaboratorSelection = ({
@@ -60,15 +75,6 @@ export class Client {
     if (!this.editor) return;
 
     console.log(collaborator, range);
-
-    const markRange = new ace.Range(
-      range.startRow,
-      range.startColumn,
-      range.endRow,
-      range.endColumn,
-    );
-
-    this.editor.session.addMarker(markRange, 'collab-mark', 'text', true);
   };
 
   handleMessage = (event: MessageEvent) => {
@@ -84,15 +90,15 @@ export class Client {
   handleCursorChange = () => {
     if (!this.editor) return;
 
-    const position = this.editor.selection.getCursor();
+    const position = this.editor.getCursor();
     const message: CollaboratorSelection = {
       type: 'CollaboratorSelection',
       collaborator: this.getCollaboratorData(),
       range: {
-        startRow: position.row,
-        startColumn: position.column,
-        endRow: position.row,
-        endColumn: position.column,
+        startRow: position.line,
+        startColumn: position.ch,
+        endRow: position.line,
+        endColumn: position.ch,
       },
       filename: this.filename,
     };
@@ -107,14 +113,9 @@ export class Client {
   }
 
   async start() {
-    require('ace-builds/webpack-resolver');
-
-    this.modeList = ace.require('ace/ext/modelist');
-    this.editor = ace.edit('editor');
-    this.editor.setTheme('ace/theme/twilight');
-    this.editor.setReadOnly(true);
+    this.editor = CodeMirror(document.body, {});
     this.webSocket = new WebSocket('ws://localhost:1337/listen');
     this.webSocket.onmessage = this.handleMessage;
-    this.editor.selection.on('changeCursor', this.handleCursorChange);
+    this.editor.on('cursorActivity', this.handleCursorChange);
   }
 }

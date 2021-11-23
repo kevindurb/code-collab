@@ -5,3 +5,11 @@
   left: 0;
   right: 0;
 }
+
+.update-mark {
+  background-color: red;
+}
+
+.CodeMirror {
+  height: auto
+}
