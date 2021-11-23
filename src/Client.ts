@@ -1,13 +1,11 @@
 import faker from 'faker';
+import * as ace from 'ace-builds';
 import { Collaborator } from './types/Collaborator';
 import { Keyframe, Message, CollaboratorSelection } from './types/Messages';
-import { Ace } from './types/Ace';
-
-const ace = window.ace as unknown as Ace;
 
 export class Client {
   webSocket?: WebSocket;
-  editor?: AceAjax.Editor;
+  editor?: ace.Ace.Editor;
   modeList?: any;
   filename = '';
   username: string;
@@ -70,7 +68,7 @@ export class Client {
       range.endColumn,
     );
 
-    this.editor.session.addMarker(markRange, 'collab-mark', 'line', true);
+    this.editor.session.addMarker(markRange, 'collab-mark', 'text', true);
   };
 
   handleMessage = (event: MessageEvent) => {
@@ -109,6 +107,8 @@ export class Client {
   }
 
   async start() {
+    require('ace-builds/webpack-resolver');
+
     this.modeList = ace.require('ace/ext/modelist');
     this.editor = ace.edit('editor');
     this.editor.setTheme('ace/theme/twilight');
